@@ -27,9 +27,9 @@ ext {
     }
 }
 
-def generatedResourcesDir = file("$projectDir/src/main/resources")
+def generatedResourcesDir = layout.buildDirectory.dir("generated-resources")
 def generateManifest = tasks.register('generateManifest') {
-    def outFile = new File(generatedResourcesDir, "manifest.json")
+    def outFile = generatedResourcesDir.map { it.file("manifest.json") }
 
     inputs.property("group", GROUP.toString())
     inputs.property("version", VERSION.toString())
@@ -39,13 +39,14 @@ def generateManifest = tasks.register('generateManifest') {
     outputs.file(outFile)
 
     doLast {
-        generatedResourcesDir.mkdirs()
+        def file = outFile.get().asFile
+        file.parentFile.mkdirs()
 
-        def json = """{
-  "Group": "${GROUP.toString()}",
+        file.text = """{
+  "Group": "${GROUP}",
   "Name": "${rootProject.name}",
-  "Version": "${VERSION.toString()}",
-  "Authors": ${Authors.toString()},
+  "Version": "${VERSION}",
+  "Authors": ${Authors},
   "Website": "*",
   "ServerVersion": "${hytale_build}",
   "Dependencies": {
@@ -53,12 +54,10 @@ def generateManifest = tasks.register('generateManifest') {
   },
   "OptionalDependencies": {},
   "DisabledByDefault": false,
-  "Main":"${mainFile.toString()}",
+  "Main":"${mainFile}",
   "IncludesAssetPack": false
 }
-""" + "\n"
-
-        outFile.text = json
+"""
     }
 }
 
@@ -70,8 +69,13 @@ sourceSets {
     }
 }
 
-tasks.named('processResources') {
+tasks.processResources {
     dependsOn generateManifest
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude 'manifest.json'
+    from(generateManifest) {
+        into ''
+    }
 }
 
 def hytaleHomePath = ext.has('hytaleHome') ? hytaleHome : null
@@ -111,6 +115,11 @@ dependencies {
 
 tasks.named('sourcesJar') {
     dependsOn generateManifest
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude 'manifest.json'
+    from(generateManifest) {
+        into ''
+    }
 }
 
 tasks.named('shadowJar') {
@@ -125,6 +134,7 @@ tasks.named('build') {
 
 if (hasHytaleHome) {
     println "hytaleHome = ${hytaleHome}"
+
     def serverRunDir = file("$projectDir/run")
     if (!serverRunDir.exists()) {
         serverRunDir.mkdirs()
@@ -134,12 +144,15 @@ if (hasHytaleHome) {
         def programParameters = '--allow-op --disable-sentry --assets="' + "${hytaleHome}/install/release/package/game/latest/Assets.zip" + '"'
         def modPaths = []
         modPaths << "${projectDir}/src/main"
+
         if (load_user_mods.toBoolean()) {
             modPaths << "${hytaleHome}/UserData/Mods"
         }
+
         if (!modPaths.isEmpty()) {
             programParameters += ' --mods="' + modPaths.join(',') + '"'
         }
+
         return programParameters
     }
 
