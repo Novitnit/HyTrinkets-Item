@@ -1,6 +1,6 @@
-package com.Nightingale.ResurrectionCollar;
+package com.Nightingale.HyTrinketsItem;
 
-import com.Nightingale.ResurrectionCollar.events.PreventDeathSystem;
+import com.Nightingale.HyTrinketsItem.events.PreventDeathSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;

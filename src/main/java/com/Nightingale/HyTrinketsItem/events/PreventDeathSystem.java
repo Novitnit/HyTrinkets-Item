@@ -1,4 +1,4 @@
-package com.Nightingale.ResurrectionCollar.events;
+package com.Nightingale.HyTrinketsItem.events;
 
 import com.Nightingale.HyTrinket.components.TrinketComponent;
 import com.Nightingale.HyTrinket.components.TrinketSlot;
