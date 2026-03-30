@@ -1,0 +1,162 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.3'
+    id 'com.gradleup.shadow' version '9.3.1'
+}
+
+
+import org.codehaus.groovy.runtime.GStringImpl
+import org.gradle.internal.os.OperatingSystem
+
+ext {
+    if (project.hasProperty('hytale_home')) {
+        hytaleHome = project.findProperty('hytale_home') as GStringImpl
+    } else if (System.getenv('HYTALE_HOME')) {
+        hytaleHome = System.getenv('HYTALE_HOME') as GStringImpl
+    } else {
+        def os = OperatingSystem.current()
+        if (os.isWindows()) {
+            hytaleHome = "${System.getProperty("user.home")}/AppData/Roaming/Hytale" as GStringImpl
+        } else if (os.isMacOsX()) {
+            hytaleHome = "${System.getProperty("user.home")}/Library/Application Support/Hytale" as GStringImpl
+        } else if (os.isLinux()) {
+            hytaleHome = "${System.getProperty("user.home")}/.var/app/com.hypixel.HytaleLauncher/data/Hytale" as GStringImpl
+            if (!file(hytaleHome).exists()) {
+                hytaleHome = "${System.getProperty("user.home")}/.local/share/Hytale" as GStringImpl
+            }
+        }
+    }
+}
+
+def generatedResourcesDir = layout.buildDirectory.dir("generated/resources")
+
+def generateManifest = tasks.register('generateManifest') {
+    def outFile = generatedResourcesDir.map { it.file("manifest.json") }
+
+    inputs.property("group", GROUP.toString())
+    inputs.property("version", VERSION.toString())
+    inputs.property("name", rootProject.name)
+    inputs.property("hytale_build", hytale_build.toString())
+
+    outputs.file(outFile)
+
+    doLast {
+        def f = outFile.get().asFile
+        f.parentFile.mkdirs()
+
+        def json = """{
+  "Group": "${GROUP.toString()}",
+  "Name": "${rootProject.name}",
+  "Version": "${VERSION.toString()}",
+  "Authors": ${Authors.toString()},
+  "Website": "*",
+  "ServerVersion": "${hytale_build}",
+  "Dependencies": {
+    "Ellie:HyUI": "*"
+  },
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main":"${mainFile.toString()}",
+  "IncludesAssetPack": true
+}
+""" + "\n"
+
+        f.write(json, 'UTF-8')
+    }
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDir generatedResourcesDir
+        }
+    }
+}
+
+tasks.named('processResources') {
+    dependsOn generateManifest
+}
+
+def hytaleHomePath = ext.has('hytaleHome') ? hytaleHome : null
+def hasHytaleHome = (hytaleHomePath != null) && file(hytaleHomePath).exists()
+
+if (!hasHytaleHome) {
+    logger.lifecycle("Hytale install not detected; skipping run configs.")
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+    withSourcesJar()
+    withJavadocJar()
+}
+
+javadoc {
+    options.addStringOption('Xdoclint:-missing', '-quiet')
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name "hMReleases"
+        url "https://maven.hytale-mods.dev/releases"
+    }
+    maven { url "https://www.cursemaven.com" }
+}
+
+dependencies {
+    compileOnly("com.hypixel.hytale:Server:+")
+    if (hasHytaleHome) {
+        runtimeOnly(files("$hytaleHome/install/release/package/game/latest/Server/HytaleServer.jar"))
+    }
+    implementation "curse.maven:hyui-1431415:7820303"
+}
+
+tasks.named('sourcesJar') {
+    dependsOn generateManifest
+}
+
+tasks.named('shadowJar') {
+    archiveClassifier.set('')
+    mergeServiceFiles()
+    exclude 'META-INF/services/**'
+}
+
+tasks.named('build') {
+    dependsOn 'shadowJar'
+}
+
+if (hasHytaleHome) {
+    println "hytaleHome = ${hytaleHome}"
+    def serverRunDir = file("$projectDir/run")
+    if (!serverRunDir.exists()) {
+        serverRunDir.mkdirs()
+    }
+
+    def createServerRunArguments = { String srcDir ->
+        def programParameters = '--allow-op --disable-sentry --assets="' + "${hytaleHome}/install/release/package/game/latest/Assets.zip" + '"'
+        def modPaths = []
+        modPaths << srcDir
+        if (load_user_mods.toBoolean()) {
+            modPaths << "${hytaleHome}/UserData/Mods"
+        }
+        if (!modPaths.isEmpty()) {
+            programParameters += ' --mods="' + modPaths.join(',') + '"'
+        }
+        return programParameters
+    }
+
+    idea.project.settings.runConfigurations {
+        'HytaleServer'(org.jetbrains.gradle.ext.Application) {
+            mainClass = 'com.hypixel.hytale.Main'
+            moduleName = project.idea.module.name + '.main'
+            programParameters = createServerRunArguments(
+                    sourceSets.main.java.srcDirs.first().parentFile.absolutePath
+            )
+            workingDirectory = serverRunDir.absolutePath
+        }
+
+        'Gradle Build'(org.jetbrains.gradle.ext.Gradle) {
+            taskNames = ['clean', 'build']
+        }
+    }
+}
