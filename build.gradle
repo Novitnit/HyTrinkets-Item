@@ -4,7 +4,6 @@ plugins {
     id 'com.gradleup.shadow' version '9.3.1'
 }
 
-
 import org.codehaus.groovy.runtime.GStringImpl
 import org.gradle.internal.os.OperatingSystem
 
@@ -28,10 +27,9 @@ ext {
     }
 }
 
-def generatedResourcesDir = layout.buildDirectory.dir("generated/resources")
-
+def generatedResourcesDir = file("$projectDir/src/main/resources")
 def generateManifest = tasks.register('generateManifest') {
-    def outFile = generatedResourcesDir.map { it.file("manifest.json") }
+    def outFile = new File(generatedResourcesDir, "manifest.json")
 
     inputs.property("group", GROUP.toString())
     inputs.property("version", VERSION.toString())
@@ -41,8 +39,7 @@ def generateManifest = tasks.register('generateManifest') {
     outputs.file(outFile)
 
     doLast {
-        def f = outFile.get().asFile
-        f.parentFile.mkdirs()
+        generatedResourcesDir.mkdirs()
 
         def json = """{
   "Group": "${GROUP.toString()}",
@@ -52,16 +49,16 @@ def generateManifest = tasks.register('generateManifest') {
   "Website": "*",
   "ServerVersion": "${hytale_build}",
   "Dependencies": {
-    "Ellie:HyUI": "*"
+    "Nightingale:HyTrinket": "*"
   },
   "OptionalDependencies": {},
   "DisabledByDefault": false,
   "Main":"${mainFile.toString()}",
-  "IncludesAssetPack": true
+  "IncludesAssetPack": false
 }
 """ + "\n"
 
-        f.write(json, 'UTF-8')
+        outFile.text = json
     }
 }
 
@@ -109,6 +106,7 @@ dependencies {
         runtimeOnly(files("$hytaleHome/install/release/package/game/latest/Server/HytaleServer.jar"))
     }
     implementation "curse.maven:hyui-1431415:7820303"
+    implementation files('libs/HyTrinket.jar')
 }
 
 tasks.named('sourcesJar') {
@@ -135,7 +133,7 @@ if (hasHytaleHome) {
     def createServerRunArguments = { String srcDir ->
         def programParameters = '--allow-op --disable-sentry --assets="' + "${hytaleHome}/install/release/package/game/latest/Assets.zip" + '"'
         def modPaths = []
-        modPaths << srcDir
+        modPaths << "${projectDir}/src/main"
         if (load_user_mods.toBoolean()) {
             modPaths << "${hytaleHome}/UserData/Mods"
         }

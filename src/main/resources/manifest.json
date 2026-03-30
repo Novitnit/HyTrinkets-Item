@@ -1,0 +1,16 @@
+{
+  "Group": "Nightingale",
+  "Name": "ResurrectionCollar",
+  "Version": "0.0.1",
+  "Authors": [ { "Name": "Nightingale" } ],
+  "Website": "*",
+  "ServerVersion": "2026.03.26-89796e57b",
+  "Dependencies": {
+    "Nightingale:HyTrinket": "*"
+  },
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main":"com.Nightingale.ResurrectionCollar.Main",
+  "IncludesAssetPack": false
+}
+

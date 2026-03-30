@@ -1,0 +1,42 @@
+{
+  "MaxStack": 1,
+  "Model": "Items/Resurrection_Collar/ResurrectionCollar.blockymodel",
+  "Texture": "Items/Resurrection_Collar/Resurrection_Collar_texture.png",
+  "Icon": "Icons/Items/ResurrectionCollarIcon.png",
+  "IconProperties": {
+    "Scale": 1.2,
+    "Rotation": [
+      0,
+      0,
+      0
+    ],
+    "Translation": [
+      0,
+      -19
+    ]
+  },
+  "Quality": "Epic",
+  "PlayerAnimationsId": "Item",
+  "Recipe": {
+    "Input": [
+      {
+        "ItemId": "Ingredient_Voidheart"
+      },
+      {
+        "ItemId": "Ingredient_Life_Essence_Concentrated",
+        "Quantity": 10
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Type": "Crafting",
+        "Id": "Arcanebench",
+        "Categories": [
+          "Arcane_Misc"
+        ]
+      }
+    ],
+    "TimeSeconds": 300
+  },
+  "ItemLevel": 60
+}

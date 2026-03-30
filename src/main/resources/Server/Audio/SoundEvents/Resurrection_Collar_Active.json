@@ -1,0 +1,11 @@
+{
+  "Layers": [
+    {
+      "Files": [
+        "Sounds/Resurrection_Collar_Active.ogg"
+      ],
+      "RoundRobinHistorySize": 2,
+      "Volume": 3
+    }
+  ]
+}
