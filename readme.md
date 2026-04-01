@@ -10,3 +10,5 @@ This plugin adds custom items to the system.
  When the player dies:
  - The player will be revived with 1 health point.
  - The player will receive healing for 10 seconds.
+
+![Craft Guide](image/ResurrectionCollar/craft.png)
