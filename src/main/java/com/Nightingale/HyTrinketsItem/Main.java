@@ -2,6 +2,7 @@ package com.Nightingale.HyTrinketsItem;
 
 import com.Nightingale.HyTrinketsItem.events.PreventDeathSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +18,8 @@ public class Main extends JavaPlugin {
     @Override
     protected void setup() {
         logger.atInfo().log("Setting up plugin " + getName());
-        super.setup();
-
         TrinketRegistry.RegisterItem("Necklace","ResurrectionCollar");
+        super.setup();
     }
 
     @Override

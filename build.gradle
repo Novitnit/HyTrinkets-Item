@@ -27,9 +27,11 @@ ext {
     }
 }
 
-def generatedResourcesDir = layout.buildDirectory.dir("generated-resources")
+//def generatedResourcesDir = layout.buildDirectory.dir("generated-resources")
+ def generatedResourcesDir = "src/main/resources"
+
 def generateManifest = tasks.register('generateManifest') {
-    def outFile = generatedResourcesDir.map { it.file("manifest.json") }
+    def outFile = file("$generatedResourcesDir/manifest.json")
 
     inputs.property("group", GROUP.toString())
     inputs.property("version", VERSION.toString())
@@ -39,10 +41,9 @@ def generateManifest = tasks.register('generateManifest') {
     outputs.file(outFile)
 
     doLast {
-        def file = outFile.get().asFile
-        file.parentFile.mkdirs()
+        outFile.parentFile.mkdirs()
 
-        file.text = """{
+        outFile.text = """{
   "Group": "${GROUP}",
   "Name": "${rootProject.name}",
   "Version": "${VERSION}",
@@ -50,12 +51,13 @@ def generateManifest = tasks.register('generateManifest') {
   "Website": "*",
   "ServerVersion": "${hytale_build}",
   "Dependencies": {
+    "Ellie:HyUI":"*",
     "Nightingale:HyTrinket": "*"
   },
   "OptionalDependencies": {},
   "DisabledByDefault": false,
   "Main":"${mainFile}",
-  "IncludesAssetPack": false
+  "IncludesAssetPack": true
 }
 """
     }
@@ -72,10 +74,6 @@ sourceSets {
 tasks.processResources {
     dependsOn generateManifest
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude 'manifest.json'
-    from(generateManifest) {
-        into ''
-    }
 }
 
 def hytaleHomePath = ext.has('hytaleHome') ? hytaleHome : null
@@ -110,16 +108,14 @@ dependencies {
         runtimeOnly(files("$hytaleHome/install/release/package/game/latest/Server/HytaleServer.jar"))
     }
     implementation "curse.maven:hyui-1431415:7820303"
-    implementation files('libs/HyTrinket.jar')
+    compileOnly files('libs/HyTrinket.jar')
 }
 
 tasks.named('sourcesJar') {
     dependsOn generateManifest
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude 'manifest.json'
-    from(generateManifest) {
-        into ''
-    }
+//    exclude 'manifest.json'
+//    from(generateManifest)
 }
 
 tasks.named('shadowJar') {
